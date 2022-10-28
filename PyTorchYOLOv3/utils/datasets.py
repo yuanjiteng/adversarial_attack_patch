@@ -6,10 +6,13 @@ import numpy as np
 from PIL import Image
 import torch
 import torch.nn.functional as F
-
-from utils.augmentations import horisontal_flip
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
+
+
+
+from PyTorchYOLOv3.utils.augmentations import horisontal_flip
+
 
 
 def pad_to_square(img, pad_value):

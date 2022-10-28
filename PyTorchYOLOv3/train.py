@@ -1,12 +1,5 @@
 from __future__ import division
 
-from models import *
-from utils.logger import *
-from utils.utils import *
-from utils.datasets import *
-from utils.parse_config import *
-from test import evaluate
-
 from terminaltables import AsciiTable
 
 import os
@@ -23,6 +16,18 @@ from torch.autograd import Variable
 import torch.optim as optim
 
 if __name__ == "__main__":
+    from pathlib import Path
+    pwd = Path(os.getcwd()).as_posix()
+    father_path=os.path.dirname(pwd)
+    sys.path.remove(os.getcwd())
+    sys.path.insert(0,father_path)
+    from PyTorchYOLOv3.models import *
+    from PyTorchYOLOv3.utils.logger import *
+    from PyTorchYOLOv3.utils.utils import *
+    from PyTorchYOLOv3.utils.datasets import *
+    from PyTorchYOLOv3.utils.parse_config import *
+    from PyTorchYOLOv3.test import evaluate
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=10, help="number of epochs")
     parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")

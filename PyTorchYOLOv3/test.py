@@ -1,10 +1,5 @@
 from __future__ import division
 
-from models import *
-from utils.utils import *
-from utils.datasets import *
-from utils.parse_config import *
-
 import os
 import sys
 import time
@@ -59,6 +54,16 @@ def evaluate(model, path, iou_thres, conf_thres, nms_thres, img_size, batch_size
 
 
 if __name__ == "__main__":
+    from pathlib import Path
+    pwd = Path(os.getcwd()).as_posix()
+    father_path=os.path.dirname(pwd)
+    sys.path.remove(os.getcwd())
+    sys.path.insert(0,father_path)
+    from PyTorchYOLOv3.models import *
+    from PyTorchYOLOv3.utils.utils import *
+    from PyTorchYOLOv3.utils.datasets import *
+    from PyTorchYOLOv3.utils.parse_config import *
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=8, help="size of each image batch")
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")

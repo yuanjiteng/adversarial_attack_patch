@@ -1,10 +1,14 @@
 from __future__ import division
 import sys
 import torch
-sys.path.append('PyTorchYOLOv3/')
-from models import *
-from utils.utils import *
-from utils.datasets import *
+import torch.nn.functional as F
+
+
+from PyTorchYOLOv3.models import *
+from PyTorchYOLOv3.utils.utils import *
+from PyTorchYOLOv3.utils.datasets import *
+ 
+
 
 class MyDetectorYolov3():
     def __init__(self,cfgfile=None,weightfile=None):

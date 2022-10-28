@@ -20,9 +20,15 @@ from ipdb import set_trace as st
 
 
 if __name__ == "__main__":
-    from models import *
-    from utils.utils import *
-    from utils.datasets import *
+    # 更改系统目录为当前工作目录的父目录 也即myattack文件夹
+    from pathlib import Path
+    pwd = Path(os.getcwd()).as_posix()
+    father_path=os.path.dirname(pwd)
+    sys.path.remove(os.getcwd())
+    sys.path.insert(0,father_path)
+    from PyTorchYOLOv3.models import *
+    from PyTorchYOLOv3.utils.utils import *
+    from PyTorchYOLOv3.utils.datasets import *
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--image_folder", type=str, default="data/samples", help="path to dataset")

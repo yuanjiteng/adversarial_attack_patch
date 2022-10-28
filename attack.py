@@ -20,9 +20,14 @@ from ensemble_tool.utils import *
 from ensemble_tool.model import  TotalVariation
 import random
 
+import sys 
+# print(sys.path) 这一步时候还没导入其他的包
+
+
 from PyTorchYOLOv3.attack_detector import MyDetectorYolov3
+from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
 # from pytorch_pretrained_detection import FasterrcnnResnet50, MaskrcnnResnet50
-from pytorchYOLOv4.demo import DetectorYolov4
+# from pytorchYOLOv4.demo import DetectorYolov4
 from load_data import InriaDataset, PatchTransformer, PatchApplier
 from pathlib import Path
 from ipdb import set_trace as st
@@ -32,13 +37,13 @@ import sys
 
 def parser_opt(known=False):
     Gparser = argparse.ArgumentParser(description='Advpatch Training')
-    Gparser.add_argument('--model', default='yolov3', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn')
+    Gparser.add_argument('--model', default='yolov5', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn')
     Gparser.add_argument('-generator',default='gray',type=str, help='options : biggan,stylegan')
     return Gparser.parse_known_args()[0] if known else Gparser.parse_args()
 
 def run(opt):
     device =torch.device("cuda" if torch.cuda.is_available() else "cpu") # cuda or cpu
-    train_image_size   = 416
+    train_image_size   = 640
     train_batch_size      = 8
     train_loader = torch.utils.data.DataLoader(InriaDataset(img_dir='/data1/yjt/mydatasets/images/val/', 
                                                             lab_dir='/data1/yjt/mydatasets/labels/val/', 
@@ -117,7 +122,10 @@ def chooseDector(opt):
         detector=MyDetectorYolov3(cfgfile,weightfile)
         return detector 
     elif opt.model=='yolov5':
-        pass # todo 
+        cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/data/coco128.yaml'
+        weightfile='/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/yolov5s.pt'
+        detector=MyDetectorYoLov5(cfgfile,weightfile)
+        return detector
     elif opt.model=='yolov4':
         pass #todo 
     elif opt.model=='yolov7':

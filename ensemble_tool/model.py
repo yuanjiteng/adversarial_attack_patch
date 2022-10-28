@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from ensemble_tool.utils import denorm
-from pytorchYOLOv4.tool.utils import load_class_names
+# from pytorchYOLOv4.tool.utils import load_class_names
 import torchvision.transforms as transforms
 from torchvision.utils import make_grid
 from PIL import Image, ImageDraw, ImageFont
