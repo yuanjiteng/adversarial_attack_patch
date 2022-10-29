@@ -26,6 +26,7 @@ import sys
 
 from PyTorchYOLOv3.attack_detector import MyDetectorYolov3
 from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
+from FasterRCNN.attack_detector import MyFastercnn
 # from pytorch_pretrained_detection import FasterrcnnResnet50, MaskrcnnResnet50
 # from pytorchYOLOv4.demo import DetectorYolov4
 from load_data import InriaDataset, PatchTransformer, PatchApplier
@@ -37,7 +38,7 @@ import sys
 
 def parser_opt(known=False):
     Gparser = argparse.ArgumentParser(description='Advpatch Training')
-    Gparser.add_argument('--model', default='yolov5', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn')
+    Gparser.add_argument('--model', default='fasterrcnn', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn')
     Gparser.add_argument('-generator',default='gray',type=str, help='options : biggan,stylegan')
     return Gparser.parse_known_args()[0] if known else Gparser.parse_args()
 
@@ -45,8 +46,8 @@ def run(opt):
     device =torch.device("cuda" if torch.cuda.is_available() else "cpu") # cuda or cpu
     train_image_size   = 640
     train_batch_size      = 8
-    train_loader = torch.utils.data.DataLoader(InriaDataset(img_dir='/data1/yjt/mydatasets/images/val/', 
-                                                            lab_dir='/data1/yjt/mydatasets/labels/val/', 
+    train_loader = torch.utils.data.DataLoader(InriaDataset(img_dir='F:/Public/TankAeroplaneAmoredVehicle/test/images',
+                                                            lab_dir='F:/Public/TankAeroplaneAmoredVehicle/test/labels',
                                                             max_lab=50,
                                                             imgsize=train_image_size,
                                                             shuffle=True),
@@ -130,8 +131,10 @@ def chooseDector(opt):
         pass #todo 
     elif opt.model=='yolov7':
         pass #todo 
-    elif opt.model=='fastercnn':
-        pass 
+    elif opt.model=='fasterrcnn':
+        weightfile = r'F:\XWF\project\version2\adversarial_attack_patch-main\FasterRCNN\weights\resNetFpn-model-3.pth'
+        detector = MyFastercnn(weightfile)
+        return detector
     elif opt.model=='ssd':
         pass 
 
