@@ -27,6 +27,7 @@ import sys
 from PyTorchYOLOv3.attack_detector import MyDetectorYolov3
 from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
 from FasterRCNN.attack_detector import MyFastercnn
+from SSD.attack_detector import MySSD
 # from pytorch_pretrained_detection import FasterrcnnResnet50, MaskrcnnResnet50
 # from pytorchYOLOv4.demo import DetectorYolov4
 from load_data import InriaDataset, PatchTransformer, PatchApplier
@@ -38,14 +39,14 @@ import sys
 
 def parser_opt(known=False):
     Gparser = argparse.ArgumentParser(description='Advpatch Training')
-    Gparser.add_argument('--model', default='fasterrcnn', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn')
+    Gparser.add_argument('--model', default='fasterrcnn', type=str, help='options : yolov2, yolov3, yolov4, fasterrcnn,ssd')
     Gparser.add_argument('-generator',default='gray',type=str, help='options : biggan,stylegan')
     return Gparser.parse_known_args()[0] if known else Gparser.parse_args()
 
 def run(opt):
     device =torch.device("cuda" if torch.cuda.is_available() else "cpu") # cuda or cpu
     train_image_size   = 640
-    train_batch_size      = 8
+    train_batch_size      = 4
     train_loader = torch.utils.data.DataLoader(InriaDataset(img_dir='F:/Public/TankAeroplaneAmoredVehicle/test/images',
                                                             lab_dir='F:/Public/TankAeroplaneAmoredVehicle/test/labels',
                                                             max_lab=50,
@@ -136,7 +137,10 @@ def chooseDector(opt):
         detector = MyFastercnn(weightfile)
         return detector
     elif opt.model=='ssd':
-        pass 
+        weightfile = r'F:\XWF\project\version2\adversarial_attack_patch-main\SSD\weights\ssd300-1.pth'
+        detector = MySSD(weightfile)
+        return detector
+
 
 def chooseTransformation():
     enable_rotation       = False
