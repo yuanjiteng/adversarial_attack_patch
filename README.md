@@ -19,5 +19,4 @@ YOLOv5 和YOLOv7的测试直接通过cd  进入相关目录  运行python detect
 3 增加图像增强类 详见load_data1 
 4 攻击投影变换图像
 5 增加fasterrcnn ssd 原始检测代码（patch测试）
-6 可视化和bash脚本(检测)
-
+6 可视化和bash脚本(检测使用)
