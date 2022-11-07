@@ -1,15 +1,23 @@
-对于yolov5代码的改变，将sys.append()代码进行注释，并在所有的文件前面增加
+代码说明：
+1 修改train_loader数据集中路径：
+2 修改chooseDetector中路径
+3 修改训练策略                                              
+    start_lr = 0.01
+    iter_max = 800000 #最大训练步数
+    power = 0.9
+    iter_batch=0  #迭代步数
+    iter_collect=10 #集体攻击步数
+    iter_save=1000 #每过1000次保存一次patch 
 
-PyTorchYOLOv5. 用于引用，在进行模型加载时候增加代码在 experiment.py 
+测试：
 
-`with add_path('/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/'):`
+YOLOv5 和YOLOv7的测试直接通过cd  进入相关目录  运行python detect.py 并指定文件夹即可
 
-进行临时的sys使用，从而减少引入包的冲突
+待做事项：
+1 fasterrcnn攻击损失难以下降调优
+2 增加打印损失
+3 增加图像增强类 详见load_data1 
+4 攻击投影变换图像
+5 增加fasterrcnn ssd 原始检测代码（patch测试）
+6 可视化和bash脚本(检测)
 
-
-
-对于yolov3，不增加YOLOv3进入系统工作目录，保证所有找包的系统环境只有最外层的myattack文件夹一个，训练时候 在train中修改 sys.path 就行
-
-
-
-attack_test.py 文件为测试模型使用

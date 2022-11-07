@@ -3,7 +3,7 @@ import time
 import os
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from torchsummary import summary
+# from torchsummary import summary
 from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
 from torchvision.utils import save_image

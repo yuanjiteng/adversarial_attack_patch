@@ -8,9 +8,9 @@
 
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../datasets/coco128  # dataset root dir
-train: images/train2017  # train images (relative to 'path') 128 images
-val: images/train2017  # val images (relative to 'path') 128 images
+path: ../mydatasets  # dataset root dir
+train: images/train  # train images (relative to 'path') 128 images
+val: images/val  # val images (relative to 'path') 128 images
 test:  # test images (optional)
 
 # Classes
@@ -22,7 +22,7 @@ names:
   4: airplane
   5: bus
   6: train
-  7: truck
+  7: Armored vehicles
   8: boat
   9: traffic light
   10: fire hydrant
@@ -95,7 +95,13 @@ names:
   77: teddy bear
   78: hair drier
   79: toothbrush
+  80: tank
+  81: empty1
+  82: empty2
+  83: empty3
+  84: empty4
+
 
 
 # Download script/URL (optional)
-download: https://ultralytics.com/assets/coco128.zip
+# download: https://ultralytics.com/assets/coco128.zip

@@ -163,7 +163,7 @@ class BaseModel(nn.Module):
                 m.anchor_grid = list(map(fn, m.anchor_grid))
         return self
 
-
+# 这就是模型，下面试一试读一个模型保存参数然后从参数加载的方式进行yolov5的加载
 class DetectionModel(BaseModel):
     # YOLOv5 detection model
     def __init__(self, cfg='yolov5s.yaml', ch=3, nc=None, anchors=None):  # model, input channels, number of classes

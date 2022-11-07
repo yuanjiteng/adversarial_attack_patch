@@ -185,11 +185,18 @@ class GeneralizedRCNNTransform(nn.Module):
 
         # 创建shape为batch_shape且值全部为0的tensor
         batched_imgs = images[0].new_full(batch_shape, 0)
-        for img, pad_img in zip(images, batched_imgs):
-            # 将输入images中的每张图片复制到新的batched_imgs的每张图片中，对齐左上角，保证bboxes的坐标不变
-            # 这样保证输入到网络中一个batch的每张图片的shape相同
-            # copy_: Copies the elements from src into self tensor and returns self
-            pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
+
+        # print(batched_imgs.shape) [B,3,800,800] 统一到这个大小吗
+
+        # for img, pad_img in zip(images, batched_imgs):
+        #     # 将输入images中的每张图片复制到新的batched_imgs的每张图片中，对齐左上角，保证bboxes的坐标不变
+        #     # 这样保证输入到网络中一个batch的每张图片的shape相同
+        #     # copy_: Copies the elements from src into self tensor and returns self
+        #     pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
+
+        for i in range(len(images)):
+            img =images[i]
+            batched_imgs[i][: img.shape[0], : img.shape[1], : img.shape[2]]=img
 
         return batched_imgs
 

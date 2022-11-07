@@ -31,18 +31,19 @@ class MySSD():
 
     def attack(self, input_imgs, attack_id=[0], total_cls=85, object_thres=0.1, clear_imgs=None, compare_imgs=None,
                img_size=None):
-        attack_id = [4,7,80]                              #z
+        # attack_id = [4,7,80]
+        # attack_id=[i+5 for i in attack_id]                                  #z
         bboxes = []
         prof_max_scores = []
         any_max_scores = []
-        input_imgs_resize = F.interpolate(input_imgs, size=300).to(self.device)#ssd输入大小规定300*300
+        input_imgs_resize = F.interpolate(input_imgs, size=img_size).to(self.device)#ssd输入大小规定300*300
         self.model.eval()
         for input_img,ori_img in zip(input_imgs_resize,input_imgs):
-            with torch.no_grad():
-                input_img = input_img.unsqueeze(0)
-                data_transform = transforms.Compose([transforms.Normalization()])
-                input_img,_ = data_transform(input_img)
-                predictions = self.model(input_img)[0]
+            # with torch.no_grad():
+            input_img = input_img.unsqueeze(0)
+            data_transform = transforms.Compose([transforms.Normalization()])
+            input_img,_ = data_transform(input_img)
+            predictions = self.model(input_img)[0]
 
             predict_boxes = predictions[0]
             if (len(predict_boxes)==0):
@@ -60,8 +61,8 @@ class MySSD():
             bbox = torch.cat((predict_boxes, predict_scores.resize(batch, 1), predict_scores.resize(batch, 1),
                               predict_classes.resize(batch, 1)), 1)
 
-            keep = np.in1d(bbox[:, -1].cpu().numpy(), attack_id)
-            bbox.requires_grad = True
+            keep = np.in1d(bbox[:, -1].detach().cpu().numpy(), attack_id)
+            # bbox.requires_grad = True
             any_max_score = torch.max(bbox[:, -2])
             any_max_scores.append(any_max_score)
 
@@ -89,4 +90,5 @@ class MySSD():
             pass
         if not compare_imgs ==None:
             pass
-        return torch.mean(prof_max_scores).requires_grad_(True)
+        # return prof_max_scores
+        return torch.mean(prof_max_scores)

@@ -5,19 +5,11 @@ import sys
 # sys.path.append(os.path.abspath(os.path.join(__dir__, '../..'))) #
 
 
-
-
-
-
-
-
 import torch.nn.functional as F
 import numpy as np
 import torch
 from FasterRCNN.backbone import resnet50_fpn_backbone
 from FasterRCNN.network_files import FasterRCNN
-
-
 
 
 class MyFastercnn():
@@ -32,15 +24,17 @@ class MyFastercnn():
 
     def attack(self, input_imgs, attack_id=[0], total_cls=85, object_thres=0.1, clear_imgs=None, compare_imgs=None,
                img_size=None):
-        attack_id = [4,7,80]                              #z
+        # attack_id=[i+5 for i in attack_id]                            #z
         bboxes = []
         prof_max_scores = []
         any_max_scores = []
         input_imgs = F.interpolate(input_imgs, size=img_size).to(self.device)
         self.model.eval()
+        # 对于每一张图像 
         for input_img in input_imgs:
-            with torch.no_grad():
-                outputs = self.model([input_img])[0]
+            # with torch.no_grad():
+            outputs = self.model([input_img])[0]
+            #每张图输出的候选框可能没有 
             if (len(outputs["boxes"])==0):
                 bboxes.append(torch.tensor([]))
                 prof_max_scores.append(torch.tensor(0.0).to(self.device))
@@ -50,14 +44,16 @@ class MyFastercnn():
             outputs["boxes"][:, 2] = outputs["boxes"][:, 2] / input_img.size()[-2]
             outputs["boxes"][:, 3] = outputs["boxes"][:, 3] / input_img.size()[-1]
 
+            # 这是啥
             # create bbox with (batch,7). (x1,y1,x2,y2,score,score,class_id)
             batch = outputs["boxes"].size()[0]
             outputs["labels"] = outputs["labels"] - 1  # without class __background__
             bbox = torch.cat((outputs["boxes"], outputs["scores"].resize(batch, 1), outputs["scores"].resize(batch, 1),
-                              outputs["labels"].resize(batch, 1)), 1)
-
-            keep = np.in1d(bbox[:, -1].cpu().numpy(), attack_id)
-            bbox.requires_grad = True
+                              outputs["labels"].resize(batch, 1)), 1) #[x, 7]
+            
+            # 测试attack_id是否在bbox[:,-1]中
+            keep = np.in1d(bbox[:, -1].detach().cpu().numpy(), attack_id)
+            # bbox.requires_grad = True
             any_max_score = torch.max(bbox[:, -2])
             any_max_scores.append(any_max_score)
 
@@ -67,12 +63,12 @@ class MyFastercnn():
                 # get max score
                 max_score = torch.max(bbox[:, -2])
                 # print("max_score : "+str(max_score))
-
                 bboxes.append(bbox)
                 prof_max_scores.append(max_score)
             else:
                 bboxes.append(torch.tensor([]))
                 prof_max_scores.append(torch.tensor(0.0).to(self.device))
+        
         if(len(prof_max_scores) > 0):
             prof_max_scores = torch.stack(prof_max_scores, dim=0)
         else:
@@ -85,4 +81,7 @@ class MyFastercnn():
             pass
         if not compare_imgs ==None:
             pass
-        return torch.mean(prof_max_scores)
+
+        # return prof_max_scores
+        return torch.mean(prof_max_scores).requires_grad_(True)
+    

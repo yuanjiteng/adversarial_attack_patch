@@ -93,7 +93,7 @@ def attempt_load(weights, device=None, inplace=True, fuse=True):
     for w in weights if isinstance(weights, list) else [weights]:            
         # print("\n")
         # print('begin',sys.path)
-        with add_path('/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/'):
+        with add_path('/data/yjt/adversarial_attack/myattack/PyTorchYOLOv5/'):
             ckpt = torch.load(attempt_download(w), map_location='cpu')  # load
         # print("\n")
         # print('end',sys.path)

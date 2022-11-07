@@ -1,9 +1,10 @@
+# from curses import ACS_STERLING
 import fnmatch
 import math
 import os
 import sys
 import time
-from operator import itemgetter
+# from operator import itemgetter
 
 import gc
 import numpy as np
@@ -14,7 +15,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
-from imageaug.transforms import Colorspace
+# from imageaug.transforms import Colorspace
 import math
 import torch
 import torch.nn as nn
@@ -24,10 +25,7 @@ from torch.nn.modules.utils import _pair, _quadruple
 import matplotlib.pyplot as plt
 
 from math import pi
-import torchgeometry as tgm
 from ipdb import set_trace as st
-
-# 主要使用patch transformer 和 applied 
 from load_utils.utils import get_rad, get_deg, deg_to_rad, rad_to_deg
 
 
@@ -74,7 +72,7 @@ class MedianPool2d(nn.Module):
         x = x.unfold(2, self.k[0], self.stride[0]).unfold(3, self.k[1], self.stride[1])
         x = x.contiguous().view(x.size()[:4] + (-1,)).median(dim=-1)[0]
         return x
-#from ..ensemble import enable_rotate
+
 class MaxProbExtractor(nn.Module):
     """MaxProbExtractor: extracts max class probability for class from YOLO output.
 
@@ -124,7 +122,7 @@ class MaxProbExtractor(nn.Module):
         # output_score = torch.sum(((output_objectness_availalbe * confs_for_class_availalbe) / output_area_availalbe), dim=1)
 
         return max_conf_target
-        # return output_score
+        
 
 class NPSCalculator(nn.Module):
     """NMSCalculator: calculates the non-printability score of a patch.
@@ -260,7 +258,6 @@ class CSSCalculator(nn.Module):
         # print("pa size: "+str(pa.size()))  ##                           pa size: torch.Size([1, 3, 300, 300])
         return pa
 
-
 class TotalVariation(nn.Module):
     """TotalVariation: calculates the total variation of a patch.
 
@@ -280,84 +277,84 @@ class TotalVariation(nn.Module):
         tv = tvcomp1 + tvcomp2
         return tv/torch.numel(adv_patch)
 
-class PatchSimpleTransformer(nn.Module):
-    def __init__(self):
-        super(PatchSimpleTransformer, self).__init__()
-        self.min_contrast = 0.8
-        self.max_contrast = 1.2
-        self.min_brightness = -0.1
-        self.max_brightness = 0.1
-        self.noise_factor = 0.10
-        self.minangle = -20 / 180 * math.pi
-        self.maxangle = 20 / 180 * math.pi
-        self.medianpooler = MedianPool2d(7,same=True)
+# class PatchSimpleTransformer(nn.Module):
+#     def __init__(self):
+#         super(PatchSimpleTransformer, self).__init__()
+#         self.min_contrast = 0.8
+#         self.max_contrast = 1.2
+#         self.min_brightness = -0.1
+#         self.max_brightness = 0.1
+#         self.noise_factor = 0.10
+#         self.minangle = -20 / 180 * math.pi
+#         self.maxangle = 20 / 180 * math.pi
+#         self.medianpooler = MedianPool2d(7,same=True)
 
-    def rect_occluding(self, num_rect=1, n_batch=8, n_feature=14, patch_size=300, with_cuda=True):
-        if(with_cuda):
-            device = 'cuda:0'
-        else:
-            device = 'cpu'
-        tensor_img = torch.full((3, patch_size, patch_size), 0.0).to(device)
-        for ttt in range(num_rect):
-            xs = torch.randint(0,int(patch_size/2),(1,))[0]
-            xe = torch.randint(xs,
-                                torch.min(torch.tensor(tensor_img.size()[-1]), xs+int(patch_size/2)),
-                                (1,))[0]
-            ys = torch.randint(0,int(patch_size/2),(1,))[0]
-            ye = torch.randint(ys,
-                                torch.min(torch.tensor(tensor_img.size()[-1]), ys+int(patch_size/2)),
-                                (1,))[0]
-            tensor_img[:,xs:xe,ys:ye] = 0.5
-        tensor_img_batch = tensor_img.unsqueeze(0) ##  torch.Size([1, 3, 300, 300])
-        tensor_img_batch = tensor_img_batch.expand(n_batch, n_feature, -1, -1, -1)  ##  torch.Size([8, 14, 3, 300, 300])
-        return tensor_img_batch.to(device)
+#     def rect_occluding(self, num_rect=1, n_batch=8, n_feature=14, patch_size=300, with_cuda=True):
+#         if(with_cuda):
+#             device = 'cuda:0'
+#         else:
+#             device = 'cpu'
+#         tensor_img = torch.full((3, patch_size, patch_size), 0.0).to(device)
+#         for ttt in range(num_rect):
+#             xs = torch.randint(0,int(patch_size/2),(1,))[0]
+#             xe = torch.randint(xs,
+#                                 torch.min(torch.tensor(tensor_img.size()[-1]), xs+int(patch_size/2)),
+#                                 (1,))[0]
+#             ys = torch.randint(0,int(patch_size/2),(1,))[0]
+#             ye = torch.randint(ys,
+#                                 torch.min(torch.tensor(tensor_img.size()[-1]), ys+int(patch_size/2)),
+#                                 (1,))[0]
+#             tensor_img[:,xs:xe,ys:ye] = 0.5
+#         tensor_img_batch = tensor_img.unsqueeze(0) ##  torch.Size([1, 3, 300, 300])
+#         tensor_img_batch = tensor_img_batch.expand(n_batch, n_feature, -1, -1, -1)  ##  torch.Size([8, 14, 3, 300, 300])
+#         return tensor_img_batch.to(device)
 
-    def deg_to_rad(self, deg):
-        return torch.tensor(deg * pi / 180.0).float().cuda()
+#     def deg_to_rad(self, deg):
+#         return torch.tensor(deg * pi / 180.0).float().cuda()
 
-    def rad_to_deg(self, rad):
-        return torch.tensor(rad * 180.0 / pi).float().cuda()
+#     def rad_to_deg(self, rad):
+#         return torch.tensor(rad * 180.0 / pi).float().cuda()
 
-    def get_warpR(self, anglex, angley, anglez,fov,w,h):
-        fov = torch.tensor(fov).float().cuda()
-        w   = torch.tensor(w).float().cuda()
-        h   = torch.tensor(h).float().cuda()
-        z = torch.sqrt(w ** 2 + h ** 2) / 2 / torch.tan(deg_to_rad(fov / 2)).float().cuda()
-        rx = torch.tensor([[1, 0, 0, 0],
-                    [0, torch.cos(deg_to_rad(anglex)), -torch.sin(deg_to_rad(anglex)), 0],
-                    [0, -torch.sin(deg_to_rad(anglex)), torch.cos(deg_to_rad(anglex)), 0, ],
-                    [0, 0, 0, 1]]).float().cuda()
-        ry = torch.tensor([[torch.cos(deg_to_rad(angley)), 0, torch.sin(deg_to_rad(angley)), 0],
-                    [0, 1, 0, 0],
-                    [-torch.sin(deg_to_rad(angley)), 0, torch.cos(deg_to_rad(angley)), 0, ],
-                    [0, 0, 0, 1]]).float().cuda()
-        rz = torch.tensor([[torch.cos(deg_to_rad(anglez)), torch.sin(deg_to_rad(anglez)), 0, 0],
-                    [-torch.sin(deg_to_rad(anglez)), torch.cos(deg_to_rad(anglez)), 0, 0],
-                    [0, 0, 1, 0],
-                    [0, 0, 0, 1]]).float().cuda()
-        r = torch.matmul(torch.matmul(rx, ry), rz)
-        pcenter = torch.tensor([h / 2, w / 2, 0, 0]).float().cuda()
-        p1 = torch.tensor([0, 0, 0, 0]).float().cuda() - pcenter
-        p2 = torch.tensor([w, 0, 0, 0]).float().cuda() - pcenter
-        p3 = torch.tensor([0, h, 0, 0]).float().cuda() - pcenter
-        p4 = torch.tensor([w, h, 0, 0]).float().cuda() - pcenter
-        dst1 = torch.matmul(r, p1)
-        dst2 = torch.matmul(r, p2)
-        dst3 = torch.matmul(r, p3)
-        dst4 = torch.matmul(r, p4)
-        list_dst = [dst1, dst2, dst3, dst4]
-        org = torch.tensor([[0, 0],
-                        [w, 0],
-                        [0, h],
-                        [w, h]]).float().cuda()
-        dst = torch.zeros((4, 2)).float().cuda()
-        for i in range(4):
-            dst[i, 0] = list_dst[i][0] * z / (z - list_dst[i][2]) + pcenter[0]
-            dst[i, 1] = list_dst[i][1] * z / (z - list_dst[i][2]) + pcenter[1]
-        org = org.unsqueeze(0)
-        dst = dst.unsqueeze(0)
-        warpR = tgm.get_perspective_transform(org, dst).float().cuda()
-        return warpR
+#     def get_warpR(self, anglex, angley, anglez,fov,w,h):
+#         fov = torch.tensor(fov).float().cuda()
+#         w   = torch.tensor(w).float().cuda()
+#         h   = torch.tensor(h).float().cuda()
+#         z = torch.sqrt(w ** 2 + h ** 2) / 2 / torch.tan(deg_to_rad(fov / 2)).float().cuda()
+#         rx = torch.tensor([[1, 0, 0, 0],
+#                     [0, torch.cos(deg_to_rad(anglex)), -torch.sin(deg_to_rad(anglex)), 0],
+#                     [0, -torch.sin(deg_to_rad(anglex)), torch.cos(deg_to_rad(anglex)), 0, ],
+#                     [0, 0, 0, 1]]).float().cuda()
+#         ry = torch.tensor([[torch.cos(deg_to_rad(angley)), 0, torch.sin(deg_to_rad(angley)), 0],
+#                     [0, 1, 0, 0],
+#                     [-torch.sin(deg_to_rad(angley)), 0, torch.cos(deg_to_rad(angley)), 0, ],
+#                     [0, 0, 0, 1]]).float().cuda()
+#         rz = torch.tensor([[torch.cos(deg_to_rad(anglez)), torch.sin(deg_to_rad(anglez)), 0, 0],
+#                     [-torch.sin(deg_to_rad(anglez)), torch.cos(deg_to_rad(anglez)), 0, 0],
+#                     [0, 0, 1, 0],
+#                     [0, 0, 0, 1]]).float().cuda()
+#         r = torch.matmul(torch.matmul(rx, ry), rz)
+#         pcenter = torch.tensor([h / 2, w / 2, 0, 0]).float().cuda()
+#         p1 = torch.tensor([0, 0, 0, 0]).float().cuda() - pcenter
+#         p2 = torch.tensor([w, 0, 0, 0]).float().cuda() - pcenter
+#         p3 = torch.tensor([0, h, 0, 0]).float().cuda() - pcenter
+#         p4 = torch.tensor([w, h, 0, 0]).float().cuda() - pcenter
+#         dst1 = torch.matmul(r, p1)
+#         dst2 = torch.matmul(r, p2)
+#         dst3 = torch.matmul(r, p3)
+#         dst4 = torch.matmul(r, p4)
+#         list_dst = [dst1, dst2, dst3, dst4]
+#         org = torch.tensor([[0, 0],
+#                         [w, 0],
+#                         [0, h],
+#                         [w, h]]).float().cuda()
+#         dst = torch.zeros((4, 2)).float().cuda()
+#         for i in range(4):
+#             dst[i, 0] = list_dst[i][0] * z / (z - list_dst[i][2]) + pcenter[0]
+#             dst[i, 1] = list_dst[i][1] * z / (z - list_dst[i][2]) + pcenter[1]
+#         org = org.unsqueeze(0)
+#         dst = dst.unsqueeze(0)
+#         warpR = tgm.get_perspective_transform(org, dst).float().cuda()
+#         return warpR
 
     def warping(self, input_tensor_img, wrinkle_p = 15):
         C, H, W = input_tensor_img.size()
@@ -530,7 +527,10 @@ class PatchSimpleTransformer(nn.Module):
             lab_batch_scaled[:, :, 2] = lab_batch[:, :, 2] * img_size
             lab_batch_scaled[:, :, 3] = lab_batch[:, :, 3] * img_size
             lab_batch_scaled[:, :, 4] = lab_batch[:, :, 4] * img_size
-            target_size = torch.sqrt(((lab_batch_scaled[:, :, 3].mul(scale_rate)) ** 2) + ((lab_batch_scaled[:, :, 4].mul(scale_rate)) ** 2))  # torch.Size([8, 14])
+            # scale 代表batch 大小吗？
+            target_size = torch.sqrt(((lab_batch_scaled[:, :, 3].mul(scale_rate)) ** 2) + ((lab_batch_scaled[:, :, 4].mul(scale_rate)) ** 2))  
+
+            # 112
             target_x = lab_batch[:, :, 1].view(np.prod(batch_size))  # torch.Size([112]) 8*14
             target_y = lab_batch[:, :, 2].view(np.prod(batch_size))  # torch.Size([112]) 8*14
             targetoff_x = lab_batch[:, :, 3].view(np.prod(batch_size))  # torch.Size([112]) 8*14
@@ -540,6 +540,8 @@ class PatchSimpleTransformer(nn.Module):
                 target_x = target_x + off_x
                 off_y = targetoff_y*(torch.cuda.FloatTensor(targetoff_y.size()).uniform_(-0.4,0.4))
                 target_y = target_y + off_y
+            
+            # -0.05为什么？
             target_y = target_y - 0.05
             # print("current_patch_size : "+str(current_patch_size))
             # print("target_size        : "+str(target_size.size()))
@@ -571,6 +573,7 @@ class PatchSimpleTransformer(nn.Module):
             # print(1*cos/scale)
             # print(-1*cos/scale)
 
+            # 仿射变换？同时进行
             b_sh = adv_batch.shape  # b_sh = torch.Size([112, 3, 416, 416])
             grid = F.affine_grid(theta, adv_batch.shape)  # torch.Size([112, 416, 416, 2])
 
@@ -676,7 +679,6 @@ class PatchSimpleTransformer(nn.Module):
         # return adv_batch_masked, adv_batch_masked0, adv_batch_masked1, adv_batch_masked3, adv_batch_masked4, adv_batch_t, msk_batch_t, adv_patch_set
         return adv_batch_masked, adv_patch_set, msk_batch
 
-# 对于patch进行亮度什么的改变，先不用
 class PatchTransformer(nn.Module):
     """PatchTransformer: transforms batch of patches
 
@@ -877,7 +879,9 @@ class PatchTransformer(nn.Module):
         # print("adv_patch medianpooler size: "+str(adv_patch.size())) ## torch.Size([1, 3, 300, 300])
         # Make a batch of patches
         adv_patch = adv_patch.unsqueeze(0)#.unsqueeze(0)  ##  torch.Size([1, 1, 3, 300, 300])
+        # print(adv_patch.shape)
         adv_batch = adv_patch.expand(lab_batch.size(0), lab_batch.size(1), -1, -1, -1)  ##  torch.Size([8, 14, 3, 300, 300])
+        # print(adv_batch.shape)
         batch_size = torch.Size((lab_batch.size(0), lab_batch.size(1)))
 
         if not(len(patch_mask)==0):
@@ -975,17 +979,27 @@ class PatchTransformer(nn.Module):
                 adv_batch = torch.clamp(adv_batch, 0.000001, 0.99999)
 
             # Where the label class_id is 1 we don't want a patch (padding) --> fill mask with zero's
+            # lab_batch [8 14 5] 后面的5 就是label的数据 这里取出类别 然后进行扩充 当类别是1 时候直接将mask填充为0   
             cls_ids = torch.narrow(lab_batch, 2, 0, 1)  # torch.Size([8, 14, 1])
             cls_mask = cls_ids.expand(-1, -1, 3)  # torch.Size([8, 14, 3])
             cls_mask = cls_mask.unsqueeze(-1)  # torch.Size([8, 14, 3, 1])
             cls_mask = cls_mask.expand(-1, -1, -1, adv_batch.size(3))  # torch.Size([8, 14, 3, 300])
             cls_mask = cls_mask.unsqueeze(-1)  # torch.Size([8, 14, 3, 300, 1])
-            cls_mask = cls_mask.expand(-1, -1, -1, -1, adv_batch.size(4))  # torch.Size([8, 14, 3, 300, 300])
-            msk_batch = torch.cuda.FloatTensor(cls_mask.size()).fill_(1) - cls_mask  # torch.Size([8, 14, 3, 300, 300])
+            cls_mask = cls_mask.expand(-1, -1, -1, -1, adv_batch.size(4))  # torch.Size([8, 14, 3, 300, 300]) 内容全是 id 
+            msk_batch = torch.cuda.FloatTensor(cls_mask.size()).fill_(100) - cls_mask  # torch.Size([8, 14, 3, 300, 300]) 要么是0（代表填充值） 要么是某一值
+            # 但是 id=0 这里是为了减去 由于扩充多出来的值，因此设置为85 以外的值比较合适 确实，于是mask就成了，有些是0（）有些不是（0）
+            # 不是0代表这个label有类别，是0代表没有类别 这里不是特定类别就不贴mask吗？还是说还是要贴呢
+            # 或者说要攻击的话就必须存在一定的
+
+
+
+            msk_batch [msk_batch!=0]=1
 
             # Pad patch and mask to image dimensions
             # Determine size of padding
             pad = (img_size - msk_batch.size(-1)) / 2  # (416-300) / 2 = 58
+
+            # 给周围填充0，这不还是中心填充方式吗？
             # print("pad : "+str(pad))
             mypad = nn.ConstantPad2d((int(pad), int(pad), int(pad), int(pad)), 0)
             # print("adv_batch size : "+str(adv_batch.size()))
@@ -1004,11 +1018,13 @@ class PatchTransformer(nn.Module):
             # Resizes and rotates
             current_patch_size = adv_patch.size(-1)
             lab_batch_scaled = torch.cuda.FloatTensor(lab_batch.size()).fill_(0)  # torch.Size([8, 14, 5])
+            # 后面四个代表 label的位置
             lab_batch_scaled[:, :, 1] = lab_batch[:, :, 1] * img_size
             lab_batch_scaled[:, :, 2] = lab_batch[:, :, 2] * img_size
             lab_batch_scaled[:, :, 3] = lab_batch[:, :, 3] * img_size
             lab_batch_scaled[:, :, 4] = lab_batch[:, :, 4] * img_size
             target_size = torch.sqrt(((lab_batch_scaled[:, :, 3].mul(scale_rate)) ** 2) + ((lab_batch_scaled[:, :, 4].mul(scale_rate)) ** 2))  # torch.Size([8, 14])
+            # 是归一化之后的数据
             target_x = lab_batch[:, :, 1].view(np.prod(batch_size))  # torch.Size([112]) 8*14
             target_y = lab_batch[:, :, 2].view(np.prod(batch_size))  # torch.Size([112]) 8*14
             targetoff_x = lab_batch[:, :, 3].view(np.prod(batch_size))  # torch.Size([112]) 8*14
@@ -1018,10 +1034,13 @@ class PatchTransformer(nn.Module):
                 target_x = target_x + off_x
                 off_y = targetoff_y*(torch.cuda.FloatTensor(targetoff_y.size()).uniform_(-0.4,0.4))
                 target_y = target_y + off_y
-            target_y = target_y - 0.05
+            target_y = target_y - 0.05  #这里防止仿射溢出，ok 
+            # 这种仿射变换后期将会被舍弃
             # print("current_patch_size : "+str(current_patch_size))
             # print("target_size        : "+str(target_size.size()))
             # print("target_size        : "+str(target_size))
+
+            # 相对于目标区域的patchsize 大小
             scale = target_size / current_patch_size   # torch.Size([8, 14])
             scale = scale.view(anglesize)  # torch.Size([112]) 8*14
             # print("scale : "+str(scale))
@@ -1030,11 +1049,14 @@ class PatchTransformer(nn.Module):
             adv_batch = adv_batch.view(s[0] * s[1], s[2], s[3], s[4])  # torch.Size([112, 3, 416, 416])
             msk_batch = msk_batch.view(s[0] * s[1], s[2], s[3], s[4])  # torch.Size([112, 3, 416, 416])
 
-            tx = (-target_x+0.5)*2
-            ty = (-target_y+0.5)*2
+            tx = (-target_x+0.5)*2 #从0.5到x的位移
+            ty = (-target_y+0.5)*2 #从0.5到y的位移
             sin = torch.sin(angle)
             cos = torch.cos(angle)        
 
+            # scale：缩放系数
+            # angle: 旋转角度（顺时针）
+            # tx ty：向左 向下移动距离 
             # Theta = rotation,rescale matrix
             theta = torch.cuda.FloatTensor(anglesize, 2, 3).fill_(0)  # torch.Size([112, 2, 3])
             theta[:, 0, 0] = (cos/scale)
@@ -1056,10 +1078,10 @@ class PatchTransformer(nn.Module):
             # sys.exit()
 
             b_sh = adv_batch.shape  # b_sh = torch.Size([112, 3, 416, 416])
-            grid = F.affine_grid(theta, adv_batch.shape)  # torch.Size([112, 416, 416, 2])
+            grid = F.affine_grid(theta, adv_batch.shape,align_corners=True)  # torch.Size([112, 416, 416, 2])
 
-            adv_batch_t = F.grid_sample(adv_batch, grid)  # torch.Size([112, 3, 416, 416])
-            msk_batch_t = F.grid_sample(msk_batch, grid)  # torch.Size([112, 3, 416, 416])
+            adv_batch_t = F.grid_sample(adv_batch, grid,align_corners=True)  # torch.Size([112, 3, 416, 416])
+            msk_batch_t = F.grid_sample(msk_batch, grid,align_corners=True)  # torch.Size([112, 3, 416, 416])
             
             # print("grid : "+str(grid[0,200:300,200:300,:]))
 
@@ -1159,7 +1181,6 @@ class PatchTransformer(nn.Module):
         # return adv_batch_masked, adv_batch_masked0, adv_batch_masked1, adv_batch_masked3, adv_batch_masked4, adv_batch_t, msk_batch_t, adv_patch_set
         return adv_batch_masked, adv_patch_set, msk_batch
 
-
 class PatchApplier(nn.Module):
     """PatchApplier: applies adversarial patches to images.
 
@@ -1180,31 +1201,7 @@ class PatchApplier(nn.Module):
             img_batch = torch.where((adv == 0), img_batch, adv)
         return img_batch
 
-'''
-class PatchGenerator(nn.Module):
-    """PatchGenerator: network module that generates adversarial patches.
 
-    Module representing the neural network that will generate adversarial patches.
-
-    """
-
-    def __init__(self, cfgfile, weightfile, img_dir, lab_dir):
-        super(PatchGenerator, self).__init__()
-        self.yolo = Darknet(cfgfile).load_weights(weightfile)
-        self.dataloader = torch.utils.data.DataLoader(InriaDataset(img_dir, lab_dir, shuffle=True),
-                                                      batch_size=5,
-                                                      shuffle=True)
-        self.patchapplier = PatchApplier()
-        self.nmscalculator = NMSCalculator()
-        self.totalvariation = TotalVariation()
-
-    def forward(self, *input):
-        pass
-'''
-
-
-# dataset 读取 inria 数据集，注意label的加载方式 可能稍微有区别 maxlabel代表 一个文件中最大的labels 数量
-# 这里换用yolo的dataset更加合适,先暂定，这里的max_lab 
 class InriaDataset(Dataset):
     """InriaDataset: representation of the INRIA person dataset.
 
@@ -1300,104 +1297,13 @@ class InriaDataset(Dataset):
 
     def pad_lab(self, lab):
         pad_size = self.max_n_labels - lab.shape[0]
-        # 为什么pad是四维数据了 有点奇怪
+
         if(pad_size>0):
-            padded_lab = F.pad(lab, (0, 0, 0, pad_size), value=1)
+            # 参数化
+            padded_lab = F.pad(lab, (0, 0, 0, pad_size), value=90)  # [x,5]转成[max_labs,5]在后面填充，值为1
         else:
             padded_lab = lab
         return padded_lab
 
 if __name__ == '__main__':
-    if len(sys.argv) == 3:
-        img_dir = sys.argv[1]
-        lab_dir = sys.argv[2]
-
-    else:
-        print('Usage: ')
-        print('  python load_data.py img_dir lab_dir')
-        sys.exit()
-
-    test_loader = torch.utils.data.DataLoader(InriaDataset(img_dir, lab_dir, shuffle=True),
-                                              batch_size=3, shuffle=True)
-
-    cfgfile = "cfg/yolov2.cfg"
-    weightfile = "weights/yolov2.weights"
-    printfile = "non_printability/30values.txt"
-    
-    patch_size = 400
-
-    darknet_model = Darknet(cfgfile)
-    darknet_model.load_weights(weightfile)
-    darknet_model = darknet_model.cuda()
-    patch_applier = PatchApplier().cuda()
-    patch_transformer = PatchTransformer().cuda()
-    prob_extractor = MaxProbExtractor(0, 80).cuda()
-    nms_calculator = NMSCalculator(printfile, patch_size)
-    total_variation = TotalVariation()
-    '''
-    img = Image.open('data/horse.jpg').convert('RGB')
-    img = img.resize((darknet_model.width, darknet_model.height))
-    width = img.width
-    height = img.height
-    img = torch.ByteTensor(torch.ByteStorage.from_buffer(img.tobytes()))
-    img = img.view(height, width, 3).transpose(0, 1).transpose(0, 2).contiguous()
-    img = img.view(1, 3, height, width)
-    img = img.float().div(255.0)
-    img = torch.autograd.Variable(img)
-
-    output = darknet_model(img)
-    '''
-    optimizer = torch.optim.Adam(model.parameters(), lr = 0.0001)
-    
-    tl0 = time.time()
-    tl1 = time.time()
-    for i_batch, (img_batch, lab_batch) in enumerate(test_loader):
-        tl1 = time.time()
-        print('time to fetch items: ',tl1-tl0)
-        img_batch = img_batch.cuda()
-        lab_batch = lab_batch.cuda()
-        adv_patch = Image.open('data/horse.jpg').convert('RGB')
-        adv_patch = adv_patch.resize((patch_size, patch_size))
-        transform = transforms.ToTensor()
-        adv_patch = transform(adv_patch).cuda()
-        img_size = img_batch.size(-1)
-        print('transforming patches')
-        t0 = time.time()
-        adv_batch_t = patch_transformer.forward(adv_patch, lab_batch, img_size)
-        print('applying patches')
-        t1 = time.time()
-        img_batch = patch_applier.forward(img_batch, adv_batch_t)
-        img_batch = torch.autograd.Variable(img_batch)
-        img_batch = F.interpolate(img_batch,(darknet_model.height, darknet_model.width))
-        print('running patched images through model')
-        t2 = time.time()
-
-        for obj in gc.get_objects():
-            try:
-                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                    try:
-                        print(type(obj), obj.size())
-                    except:
-                        pass
-            except:
-                pass
-
-        print(torch.cuda.memory_allocated())
-
-        output = darknet_model(img_batch)
-        print('extracting max probs')
-        t3 = time.time()
-        max_prob = prob_extractor(output)
-        t4 = time.time()
-        nms = nms_calculator.forward(adv_patch)
-        tv = total_variation(adv_patch)
-        print('---------------------------------')
-        print('        patch transformation : %f' % (t1-t0))
-        print('           patch application : %f' % (t2-t1))
-        print('             darknet forward : %f' % (t3-t2))
-        print('      probability extraction : %f' % (t4-t3))
-        print('---------------------------------')
-        print('          total forward pass : %f' % (t4-t0))
-        del img_batch, lab_batch, adv_patch, adv_batch_t, output, max_prob
-        torch.cuda.empty_cache()
-        tl0 = time.time()
+    pass 

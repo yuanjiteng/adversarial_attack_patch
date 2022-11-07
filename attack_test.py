@@ -24,7 +24,11 @@ from ensemble_tool.model import  TotalVariation
 import random
 
 from PyTorchYOLOv3.attack_detector import MyDetectorYolov3 
-from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
+# from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
+from PyTorchYOLOv7.attack_detector import MyDetectorYoLov7 
+
+# 为什么引用的就是yolov5中的common的
+
 from load_data import InriaDataset, PatchTransformer, PatchApplier
 from pathlib import Path
 from ipdb import set_trace as st
@@ -33,14 +37,20 @@ import sys
 
 
 if __name__ =="__main__":
-    # print('\n')
-    # print('import',sys.path)
+    print('\n')
+    print('import',sys.path)
     cfgfile1 = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv3/config/yolov3.cfg'
     weightfile1='/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv3/weights/yolov3.weights'
     detector1=MyDetectorYolov3(cfgfile1,weightfile1)
-    cfgfile2 = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/data/coco128.yaml'
-    weightfile2='/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/yolov5s.pt'
-    detector2=MyDetectorYoLov5(cfgfile2,weightfile2)
-    # print('\n')
-    # print('exit',sys.path)
+    # cfgfile2 = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/data/coco128.yaml'
+    # weightfile2='/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/yolov5s.pt'
+    # detector2=MyDetectorYoLov5(cfgfile2,weightfile2)
+
+    weightfile3='/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv7/yolov7.pt'
+    detector3=MyDetectorYoLov7(weightfile=weightfile3)
+
+    # 其实所有的yolo都可以使用yolov7 这一套来使用吧，主要也就用了1个 attempt_load 的函数？行吧
+
+    print('\n')
+    print('exit',sys.path)
 
