@@ -113,7 +113,7 @@ class SSD300(nn.Module):
             detection_features.append(x)
 
         # Feature Map 38x38x4, 19x19x6, 10x10x6, 5x5x6, 3x3x4, 1x1x4
-        locs, confs = self.bbox_view(detection_features, self.loc, self.conf)
+        locs, confs = self.bbox_view(detection_features, self.loc, self.conf)#torch.Size([1, 4, 8732])  torch.Size([1, 86, 8732])
 
         # For SSD 300, shall return nbatch x 8732 x {nlabels, nlocs} results
         # 38x38x4 + 19x19x6 + 10x10x6 + 5x5x6 + 3x3x4 + 1x1x4 = 8732

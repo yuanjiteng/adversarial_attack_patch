@@ -253,9 +253,16 @@ class LoadImages:
             # Read image
             self.count += 1
             original_img = Image.open(path)
-            data_transform = transforms.Compose([transforms.Resize(),
+            # data_transform = transforms.Compose([transforms.Resize(),
+            #                                      transforms.ToTensor(),
+            #                                      transforms.Normalization()])
+            data_transform = transforms.Compose([transforms.Resize_640(),
                                                  transforms.ToTensor(),
+                                                transforms.Resize(),
                                                  transforms.Normalization()])
+
+
+
             im0,_ = data_transform(original_img)
             im0 = torch.unsqueeze(im0, dim=0)
           # BGR

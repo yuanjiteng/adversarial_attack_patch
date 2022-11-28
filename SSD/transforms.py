@@ -159,6 +159,14 @@ class Resize(object):
         image = self.resize(image)
         return image, target
 
+class Resize_640(object):
+    """对图像进行resize处理,该方法应放在ToTensor前"""
+    def __init__(self, size=(640, 640)):
+        self.resize = t.Resize(size)
+
+    def __call__(self, image, target):
+        image = self.resize(image)
+        return image, target
 
 class ColorJitter(object):
     """对图像颜色信息进行随机调整,该方法应放在ToTensor前"""

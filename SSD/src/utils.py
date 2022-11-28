@@ -618,11 +618,18 @@ class PostProcess(nn.Module):
         bboxes, probs = self.scale_back_batch(bboxes_in, scores_in)
 
         outputs = torch.jit.annotate(List[Tuple[Tensor, Tensor, Tensor]], [])
+        output = []
         # 遍历一个batch中的每张image数据
         # bboxes: [batch, 8732, 4]
-        for bbox, prob in zip(bboxes.split(1, 0), probs.split(1, 0)):  # split_size, split_dim
+        for bbox, prob in zip(bboxes.split(1, 0), probs.split(1, 0)):  # split_size, split_dim    # bbox: [1, 8732, 4]   prob ([1, 8732, 86])
             # bbox: [1, 8732, 4]
             bbox = bbox.squeeze(0)
-            prob = prob.squeeze(0)
+            prob = prob.squeeze(0)  #
+            temp = torch.cat((bbox,prob),1)
+            output.append(temp)
             outputs.append(self.decode_single_new(bbox, prob, self.criteria, self.max_output))
-        return outputs
+        # return torch.stack(output,0)
+
+        return [torch.stack(output, 0),outputs]
+
+
