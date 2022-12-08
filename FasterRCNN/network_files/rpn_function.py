@@ -523,11 +523,14 @@ class RegionProposalNetwork(torch.nn.Module):
             boxes, scores, lvl = boxes[keep], scores[keep], lvl[keep]
 
             # non-maximum suppression, independently done per level
+            # print(keep.shape)
             keep = box_ops.batched_nms(boxes, scores, lvl, self.nms_thresh)
+            # print(keep.shape) #这里大概移除4分之一
 
             # keep only topk scoring predictions
             keep = keep[: self.post_nms_top_n()]
             boxes, scores = boxes[keep], scores[keep]
+            # print(boxes.shape)
 
             final_boxes.append(boxes)
             final_scores.append(scores)
@@ -627,10 +630,14 @@ class RegionProposalNetwork(torch.nn.Module):
         # the proposals
         # 将预测的bbox regression参数应用到anchors上得到最终预测bbox坐标
         proposals = self.box_coder.decode(pred_bbox_deltas.detach(), anchors)
-        proposals = proposals.view(num_images, -1, 4)
+        proposals = proposals.view(num_images, -1, 4) # [1,159882,4] 
+        
 
         # 筛除小boxes框，nms处理，根据预测概率获取前post_nms_top_n个目标
         boxes, scores = self.filter_proposals(proposals, objectness, images.image_sizes, num_anchors_per_level)
+
+        # 这一步是否能够反传？
+        # print(boxes[0].shape)
 
         losses = {}
         if self.training:

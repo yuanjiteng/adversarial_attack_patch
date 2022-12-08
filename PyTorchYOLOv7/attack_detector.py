@@ -31,7 +31,7 @@ class MyDetectorYoLov7():
         if cfgfile==None or weightfile==None:
             print('need configfile or weightfile')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        with add_path('/data/yjt/adversarial_attack/myattack/PyTorchYOLOv7/'):
+        with add_path('/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv7/'):
             ckpt = torch.load(weightfile, map_location=self.device)
             model = yolov7Model(cfgfile, ch=3, nc=85, anchors=None).to(self.device)
             state_dict = ckpt['model'].float().state_dict()

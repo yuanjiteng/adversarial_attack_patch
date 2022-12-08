@@ -130,7 +130,8 @@ class ListDataset(Dataset):
         # Apply augmentations
         if self.augment:
             if np.random.random() < 0.5:
-                img, targets = horisontal_flip(img, targets)
+                pass
+                # img, targets = horisontal_flip(img, targets)
 
         return img_path, img, targets
 

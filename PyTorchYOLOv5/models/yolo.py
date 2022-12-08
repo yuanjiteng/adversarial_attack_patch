@@ -1,6 +1,6 @@
 # YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
-YOLO-specific modules
+# YOLO-specific modules
 
 Usage:
     $ python models/yolo.py --cfg yolov5s.yaml
@@ -179,10 +179,10 @@ class DetectionModel(BaseModel):
         # Define model
         ch = self.yaml['ch'] = self.yaml.get('ch', ch)  # input channels
         if nc and nc != self.yaml['nc']:
-            LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
+            # LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml['nc'] = nc  # override yaml value
         if anchors:
-            LOGGER.info(f'Overriding model.yaml anchors with anchors={anchors}')
+            # LOGGER.info(f'Overriding model.yaml anchors with anchors={anchors}')
             self.yaml['anchors'] = round(anchors)  # override yaml value
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=[ch])  # model, savelist
         self.names = [str(i) for i in range(self.yaml['nc'])]  # default names
@@ -203,7 +203,7 @@ class DetectionModel(BaseModel):
         # Init weights, biases
         initialize_weights(self)
         self.info()
-        LOGGER.info('')
+        # LOGGER.info('')
 
     def forward(self, x, augment=False, profile=False, visualize=False):
         if augment:

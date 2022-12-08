@@ -166,7 +166,6 @@ class Encoder(object):
             将box格式从xywh转换回ltrb, 将预测目标score通过softmax处理
             Do scale and transform from xywh to ltrb
             suppose input N x 4 x num_bbox | N x label_num x num_bbox
-
             bboxes_in: 是网络预测的xywh回归参数
             scores_in: 是预测的每个default box的各目标概率
         """

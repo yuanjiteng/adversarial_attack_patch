@@ -4,7 +4,6 @@ import sys
 # sys.path.append(__dir__)
 # sys.path.append(os.path.abspath(os.path.join(__dir__, '../..'))) #
 
-
 import torch.nn.functional as F
 import numpy as np
 import torch
@@ -34,6 +33,8 @@ class MyFastercnn():
         for input_img in input_imgs:
             # with torch.no_grad():
             outputs = self.model([input_img])[0]
+            print(outputs["boxes"].shape) # 预测的候选框也不是很多啊 
+
             #每张图输出的候选框可能没有 
             if (len(outputs["boxes"])==0):
                 bboxes.append(torch.tensor([]))
@@ -44,13 +45,11 @@ class MyFastercnn():
             outputs["boxes"][:, 2] = outputs["boxes"][:, 2] / input_img.size()[-2]
             outputs["boxes"][:, 3] = outputs["boxes"][:, 3] / input_img.size()[-1]
 
-            # 这是啥
             # create bbox with (batch,7). (x1,y1,x2,y2,score,score,class_id)
             batch = outputs["boxes"].size()[0]
-            outputs["labels"] = outputs["labels"] - 1  # without class __background__
+            outputs["labels"] = outputs["labels"] - 1  # without class __background__ 第一类是背景类
             bbox = torch.cat((outputs["boxes"], outputs["scores"].resize(batch, 1), outputs["scores"].resize(batch, 1),
                               outputs["labels"].resize(batch, 1)), 1) #[x, 7]
-            
             # 测试attack_id是否在bbox[:,-1]中
             keep = np.in1d(bbox[:, -1].detach().cpu().numpy(), attack_id)
             # bbox.requires_grad = True

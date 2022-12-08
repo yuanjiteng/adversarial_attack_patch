@@ -31,11 +31,12 @@ if __name__ == "__main__":
     from PyTorchYOLOv3.utils.datasets import *
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_folder", type=str, default="data/samples", help="path to dataset")
+    # parser.add_argument("--image_folder", type=str, default="/data1/yjt/adversarial_attack/myattack/res_imgs/", help="path to dataset")
+    parser.add_argument("--image_folder", type=str, default="/data1/yjt/mydatasets/images/val/", help="path to dataset")
     parser.add_argument("--model_def", type=str, default="config/yolov3.cfg", help="path to model definition file")
-    parser.add_argument("--weights_path", type=str, default="weights/yolov3.weights", help="path to weights file")
+    parser.add_argument("--weights_path", type=str, default="/data1/yjt/adversarial_attack/myattack_training_models/yolov3_ckpt_50.pth", help="path to weights file")
     parser.add_argument("--class_path", type=str, default="data/coco.names", help="path to class label file")
-    parser.add_argument("--conf_thres", type=float, default=0.8, help="object confidence threshold")
+    parser.add_argument("--conf_thres", type=float, default=0.25, help="object confidence threshold")
     parser.add_argument("--nms_thres", type=float, default=0.4, help="iou thresshold for non-maximum suppression")
     parser.add_argument("--batch_size", type=int, default=1, help="size of the batches")
     parser.add_argument("--n_cpu", type=int, default=0, help="number of cpu threads to use during batch generation")
@@ -84,6 +85,7 @@ if __name__ == "__main__":
         # Get detections
         with torch.no_grad():
             detections = model(input_imgs)
+            # print(detections)
             detections = non_max_suppression(detections, opt.conf_thres, opt.nms_thres)
 
         # Log progress
@@ -98,7 +100,7 @@ if __name__ == "__main__":
 
     # Bounding-box colors
     cmap = plt.get_cmap("tab20b")
-    colors = [cmap(i) for i in np.linspace(0, 1, 20)]
+    colors = [cmap(i) for i in np.linspace(0, 1, 80)]
 
     print("\nSaving images:")
     # Iterate through images and save plot of detections

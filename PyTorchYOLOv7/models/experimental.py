@@ -265,7 +265,7 @@ def attempt_load(weights, map_location=None):
         # attempt_download(w)
         print("\n")
         print('begin',sys.path)
-        with add_path('/data/yjt/adversarial_attack/myattack/PyTorchYOLOv7/'):
+        with add_path('/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv7/'):
             ckpt = torch.load(w, map_location=map_location)  # load
         print("\n")
         print('begin',sys.path)

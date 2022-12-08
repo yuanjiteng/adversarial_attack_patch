@@ -10,6 +10,13 @@ import torch
 
 import torch.nn.functional as F 
 import yaml
+
+
+# pwd = Path(os.getcwd()).as_posix()
+# father_path=os.path.dirname(pwd)
+# sys.path.remove(os.getcwd())
+# sys.path.insert(0,father_path)
+
 from PyTorchYOLOv5.models.yolo import Model as yolov5Model
 
 
@@ -22,16 +29,17 @@ class MyDetectorYoLov5():
         self.model = yolov5Model(cfgfile, ch=3, nc=85, anchors=None).to(self.device)
         ckpt=torch.load(weightfile,map_location='cpu')
         self.model.load_state_dict(ckpt)
+        # self.model=self.load2()
 
-    def load2save():
+    def load2(self):
         # 另外一种加载方式 用于上面的方式
         from PyTorchYOLOv5.models.common import DetectMultiBackend
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        weightfile='/data1/yjt/adversarial_attack/myattack/MyEnsemble/yolov5s-85.pt'
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        weightfile='/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance.pt'
         cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/models/yolov5s.yaml'
-        model = DetectMultiBackend(weightfile, device=device, dnn=False, data=cfgfile, fp16=False)
-        torch.save(model.state_dict(), './yolov5ss-85.pt')
-
+        model = DetectMultiBackend(weightfile, device=self.device, dnn=False, data=cfgfile, fp16=False)
+        return model
+        
     # 攻击参数可以外置 
     def attack(self,input_imgs,attack_id=[0],total_cls=85,object_thres=0.1,clear_imgs=None,compare_imgs=None,img_size=None):
         # 注意 yolov5的图像大小可能和其他的不同
@@ -39,7 +47,7 @@ class MyDetectorYoLov5():
         # print(attack_id)
         input_imgs = F.interpolate(input_imgs, size=img_size).to(self.device)
         self.model.eval()
-        detections = self.model(input_imgs,augment=False, visualize=False) #v5torch.Size([B, 25200, 85])
+        detections = self.model(input_imgs,augment=False, visualize=False) 
         detections = detections[0]
         batch=detections.shape[0]
         boxes =detections.shape[1]
@@ -65,3 +73,13 @@ class MyDetectorYoLov5():
         # print(confs)
         return torch.mean(confs)
 
+
+
+if __name__=="__main__":
+    
+    from PyTorchYOLOv5.models.common import DetectMultiBackend
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    weightfile='/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance.pt'
+    cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/models/yolov5s.yaml'
+    model = DetectMultiBackend(weightfile, device=device, dnn=False, data=cfgfile, fp16=False)
+    torch.save(model.state_dict(), '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance-dict.pt')

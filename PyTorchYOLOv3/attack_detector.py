@@ -15,12 +15,12 @@ class MyDetectorYolov3():
             print('need configfile or weightfile')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model=Darknet(cfgfile).to(self.device)
-        self.model.load_darknet_weights(weightfile)
+        self.model.load_state_dict(torch.load(weightfile))
+        # self.model.load_darknet_weights(weightfile)
         print('Loading Yolov3 weights from %s... Done!' % (weightfile))
 
     def attack(self,input_imgs,attack_id=[0],total_cls=85,object_thres=0.1,clear_imgs=None,compare_imgs=None,img_size=None):
         attack_id=[i+5 for i in attack_id]
-        # print(attack_id)
         input_imgs = F.interpolate(input_imgs, size=img_size).to(self.device)
         self.model.eval()
         detections = self.model(input_imgs) 

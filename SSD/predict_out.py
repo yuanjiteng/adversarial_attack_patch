@@ -35,7 +35,7 @@ def main():
     model = create_model(num_classes=86)
 
     # load train weights
-    train_weights = "./save_weights/ssd300-49.pth"
+    train_weights = "/data1/yjt/adversarial_attack/myattack_training_models/ssd300-40.pth"
     model.load_state_dict(torch.load(train_weights, map_location='cpu')['model'])
     model.to(device)
     model.eval()
@@ -50,14 +50,14 @@ def main():
     category_index = {str(v): str(k) for k, v in class_dict.items()}
 
 
-    no_target = 'ssd49_no_target_/'
-    label_txt = 'ssd49_pre_label_txt/'
-    pre_out  = 'ssd49_out/'
+    no_target = './ssd_no_target_/'
+    label_txt = './ssd_pre_label_txt/'
+    pre_out  = './ssd_out/'
 
 
     #Tank
-    voc_xml_path = 'F:\\Public\\TankAeroplaneAmoredVehicle\\test\\Tank\\images/'   #Airplane  ArmoredVehicle
-    voc_xml_path = 'F:/XWF/project/from_yuan/images/'
+    # voc_xml_path = 'F:\\Public\\TankAeroplaneAmoredVehicle\\test\\Tank\\images/'   #Airplane  ArmoredVehicle
+    voc_xml_path = '/data1/yjt/adversarial_attack/myattack/res_imgs/'
     mylist = os.listdir(voc_xml_path)
     len_ = len(mylist)
 
@@ -78,6 +78,7 @@ def main():
         model.eval()
         with torch.no_grad():
             # initial model
+            # 这里是BGR格式？是否可以直接输入BGR？
             img_o = cv2.imread(img_path)
 
             time_start = time_synchronized()
@@ -93,14 +94,14 @@ def main():
 
             if len(predict_boxes) == 0:
                 print("没有检测到任何目标!")
-                if os.path.exists(voc_xml_path[:-7] + no_target) == False:
-                    os.makedirs(voc_xml_path[:-7] + no_target)
-                out_img = voc_xml_path[:-7] + no_target + mylist[flag]
+                if os.path.exists(no_target) == False:
+                    os.makedirs( no_target)
+                out_img =  no_target + mylist[flag]
                 cv2.imwrite(out_img,img_o)
             else:
-                if os.path.exists(voc_xml_path[:-7] + label_txt) == False:
-                    os.makedirs(voc_xml_path[:-7] + label_txt)
-                output_path = voc_xml_path[:-7] + label_txt + mylist[i][:-4] + ".txt"
+                if os.path.exists(label_txt) == False:
+                    os.makedirs(label_txt)
+                output_path = label_txt + mylist[i][:-4] + ".txt"
                 # sign_ = str(classes)
                 with open(output_path, 'w', encoding='utf-8') as f:
                     for i in range(0, predict_boxes.shape[0]):
@@ -117,9 +118,9 @@ def main():
                                  line_thickness=10,
                                  font='arial.ttf',
                                  font_size=20)
-            if os.path.exists( voc_xml_path[:-7]+pre_out)==False:
-                os.makedirs( voc_xml_path[:-7]+pre_out)
-            out_img =  voc_xml_path[:-7]+pre_out+mylist[flag]
+            if os.path.exists(pre_out)==False:
+                os.makedirs( pre_out)
+            out_img = pre_out+mylist[flag]
             plot_img.save(out_img)
             print(i)
 

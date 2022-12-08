@@ -90,12 +90,16 @@ class FasterRCNNBase(nn.Module):
         # proposals: List[Tensor], Tensor_shape: [num_proposals, 4],
         # 每个proposals是绝对坐标，且为(x1, y1, x2, y2)格式
         proposals, proposal_losses = self.rpn(images, features, targets)
+        # print(proposals[0].shape) 此时存在很多的boxes
 
         # 将rpn生成的数据以及标注target信息传入fast rcnn后半部分
         detections, detector_losses = self.roi_heads(features, proposals, images.image_sizes, targets)
+        # print(detections[0]["boxes"].shape) # 相比于上面又减少了部分
+
 
         # 对网络的预测结果进行后处理（主要将bboxes还原到原图像尺度上）
         detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)
+        
 
         losses = {}
         losses.update(detector_losses)

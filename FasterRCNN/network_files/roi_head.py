@@ -332,8 +332,10 @@ class RoIHeads(torch.nn.Module):
             boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
 
             # non-maximun suppression, independently done per class
-            # 执行nms处理，执行后的结果会按照scores从大到小进行排序返回
+            # 执行nms处理，执行后的结果会按照scores从大到小进行排序返回 一般减少了6-7倍
+            # print(keep.shape)
             keep = box_ops.batched_nms(boxes, scores, labels, self.nms_thresh)
+            # print(keep.shape)
 
             # keep only topk scoring predictions
             # 获取scores排在前topk个预测目标

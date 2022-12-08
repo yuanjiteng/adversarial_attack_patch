@@ -123,7 +123,7 @@ def run(
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
             pred = model(im, augment=augment, visualize=visualize)
             # 查看大小
-            print('pred shape',pred[0].shape)
+            # print('pred shape',pred[0].shape)
 
         # NMS
         with dt[2]:
@@ -216,8 +216,8 @@ def run(
 
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'yolov5s-85.pt', help='model path(s)')
-    parser.add_argument('--source', type=str, default='/data/yjt/adversarial_attack/myattack/res_imgs/', help='file/dir/URL/glob, 0 for webcam')
+    parser.add_argument('--weights', nargs='+', type=str, default= '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance.pt', help='model path(s)')
+    parser.add_argument('--source', type=str, default='/data1/yjt/mydatasets/images/myval_light/', help='file/dir/URL/glob, 0 for webcam')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[640], help='inference size h,w')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='confidence threshold')
@@ -247,7 +247,6 @@ def parse_opt():
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
     return opt
-
 
 def main(opt):
     check_requirements(exclude=('tensorboard', 'thop'))
