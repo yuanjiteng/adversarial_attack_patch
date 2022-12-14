@@ -4,11 +4,6 @@ import torch
 import torch.nn as nn
 import sys 
 
-"""
-此文件用于测试  YOLOv5 yolov7 的加载和推理
-用于将yolov5 读取之后重新保存dict文件
-
-""""
 
 class add_path():
     def __init__(self, path):
@@ -99,14 +94,16 @@ def main():
     # YOLOV5 原版加载方式 会增加路径信息（加载存在路径的模型） 
     with add_path('/data1/yjt/adversarial_attack/myattack'):
         from PyTorchYOLOv5.models.common import DetectMultiBackend
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        weightfile='/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance-10epoch.pt'
-        cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/models/yolov5s.yaml'
-        model = DetectMultiBackend(weightfile, device=device, dnn=False, data=cfgfile, fp16=False)
-        print("YOLOv5 load success")
-        # print(model.state_dict())
-        # 保存方法 注意一定要model.model
-        torch.save(model.model.state_dict(), '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance-10epoch-dict.pt')
+        for i in range(30):
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            weightfile='/data1/yjt/yolov5-master/runs/mytrain/30_models/weights/epoch'+str(i)+'.pt'
+            cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/models/yolov5s.yaml'
+            model = DetectMultiBackend(weightfile, device=device, dnn=False, data=cfgfile, fp16=False)
+            print("YOLOv5 load success")
+            # print(model.state_dict())
+            # 保存方法 注意一定要model.model
+            savefile='/data1/yjt/adversarial_attack/myattack_training_models/yolov5s/epoch'+str(i)+'-dict.pt'
+            torch.save(model.model.state_dict(),savefile)
 
     # YOLOv5 第二种加载方式(不存在路径定义)
     # with add_path('/data1/yjt/adversarial_attack/myattack'):

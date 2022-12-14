@@ -8,9 +8,10 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 import torchgeometry as tgm
-# from ensemble_tool.utils import *
+from torchvision.utils import save_image
 from tqdm import tqdm
 import time
+import random
 
 def time_synchronized():
     if torch.cuda.is_available():
@@ -387,6 +388,24 @@ class RespectiveDataEnhancer(nn.Module):
         img_batch_enhanced = img_batch * (1 - selectedMask) + selectedMask
         return img_batch_enhanced
 
+class PatchEnhancer(nn.Module):
+    """
+    用于对于Patch进行单独的增强 包括颜色加噪 和 重采样 
+    """
+    def __init__(self):
+        super(PatchEnhancer, self).__init__()
+    
+    def forward(self,adv_patch):
+        b,c,h,w=adv_patch.shape
+        # 颜色噪声
+        noise=torch.randint(0,5,(b,c,h,w))
+        noise=noise/255.0
+        # 重采样
+        sz=random.randint(round(h/2),h)
+        adv_patch = F.interpolate(adv_patch,size=[sz,sz])
+        adv_patch = F.interpolate(adv_patch,size=[h,h])
+        return adv_patch
+
 class NPSCalculator(nn.Module):
     """ NMSCalculator:计算patch的打印损失
         输入: adv_patch
@@ -502,7 +521,7 @@ class DifColorQuantization(nn.Module):
         super(DifColorQuantization, self).__init__()
         self.printability_array = self.get_printability_array(printability_file, patch_size)
         # self.printability_array = torch.randn(4096,3,300,300).cuda()
-        print(self.printability_array.shape)
+        # print(self.printability_array.shape)
         self.dif_color_quantization=_DifColorQuantization.apply
     
     def forward(self,adv_patch):
@@ -545,19 +564,25 @@ class _DifColorQuantization(torch.autograd.Function):
     
     @staticmethod
     def backward(ctx,grad_output):
+        # 鼓励颜色跳变
+        # ones=torch.ones_like(grad_output)*1e-1
+        # grad_output=torch.where(grad_output==0,ones,grad_output)
+        # print(grad_output)
+        # grad_output=torch.sqrt(grad_output)
+        # print(grad_output.shape)
+        # print(torch.count_nonzero(grad_output).item())
         return grad_output,None #直接忽略由于进行了颜色替换带来的影响,但可以手动控制阈值 #todo 
-
 
 
 if __name__ == '__main__':
     # 进行验证 读取数据 生成patch 投影变换 patch应用 图像增强 
     img_dir = '/data1/yjt/mydatasets/attack_datasets/images/'
     lab_dir = '/data1/yjt/mydatasets/attack_datasets/labels/'
-    rain_msk_dir='/data1/yjt/adversarial_attack/myattack/mask/rainMask/'
-    fog_msk_dir='/data1/yjt/adversarial_attack/myattack/mask/myFog/'
+    rain_msk_dir='/data1/yjt/mydatasets/mask/rainMask/'
+    fog_msk_dir='/data1/yjt/mydatasets/mask/myFog/'
 
-    results_dir = '/data1/yjt/adversarial_attack/myattack/res_imgs/'
-    patch_dir = '/data1/yjt/adversarial_attack/myattack/training_patches/55 patch.png'
+    results_dir = '/data1/yjt/adversarial_attack/myattack/test_res_imgs/'
+    patch_dir = '/data1/yjt/adversarial_attack/myattack/training_patches/2 patch.png'
     if not os.path.exists(results_dir):
         os.mkdir(results_dir)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -577,28 +602,40 @@ if __name__ == '__main__':
     transTensor = transforms.ToTensor()
     adv_patch_cpu = transTensor(adv_patch_cpu)
     # adv_patch_cpu = torch.rand((3, 50, 50))
+    
     # patch 应用器 增强器
     patch_transformer = PatchTransformer().cuda()
     patch_applier = PatchApplier().cuda()
-    data_enhancer = DataEnhancer(rain_msk_dir,fog_msk_dir, train_image_size,posibility=[0.001,0.002,0.003, 1]).cuda()
+    data_enhancer = BatchDataEnhancer(rain_msk_dir,fog_msk_dir, train_image_size,posibility=[0.001,0.002,0.003, 1]).cuda()
+    patch_enhancer = PatchEnhancer().cuda()
+    dif_color_quantization=DifColorQuantization(printability_file='/data1/yjt/adversarial_attack/myattack/color_after_print.txt',patch_size=300).cuda()
+
     iteration_total = len(train_loader)
     torch.cuda.empty_cache()
     transformPIL = transforms.ToPILImage()
-    for i_batch, (img_batch, lab_batch) in tqdm(enumerate(train_loader), desc=f'Appling patches and weather',
+    for i_batch, (img_batch, lab_batch) in tqdm(enumerate(train_loader), desc=f'Appling patches and enhance',
                                                 total=iteration_total):
         img_batch = img_batch.cuda()
         lab_batch = lab_batch.cuda()
-        adv_patch_cpu = adv_patch_cpu.cuda()
+        adv_patch = adv_patch_cpu.cuda().unsqueeze(dim=0)
+
+        adv_patch = dif_color_quantization(adv_patch)
+        # 量化这个过程比较耗时 如何缩减呢 4096 个颜色进行匹配
+
+        # adv_patch = patch_enhancer(adv_patch)
         # T3 = time.clock()
-        adv_batch_t = patch_transformer(adv_patch_cpu, lab_batch, train_image_size, with_projection=True)
+        adv_batch_t = patch_transformer(adv_patch, lab_batch, train_image_size, with_projection=True)
         # T4 = time.clock()
         # print(f"time for {train_batch_size} patch_transform is {(T4 - T3) * 1000} ms")
         p_img_batch = patch_applier(img_batch, adv_batch_t)
+        # 然后再缩小
+        # p_img_batch =F.interpolate(p_img_batch,size=[640,640])
+        
         # T1 = time.clock()
         # p_img_batch = data_enhancer(p_img_batch)
         # T2 = time.clock()
         # print(f"time for {train_batch_size} rain/fog is {(T2 - T1) * 1000} ms")
-        batch_len = p_img_batch.size(0)
+        # batch_len = p_img_batch.size(0)
         # lis_ = os.listdir(r'F:\Public\multiPatch\images')
         for i, p_img in enumerate(p_img_batch):
             # pytorch 自带的保存图像接口 

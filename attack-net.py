@@ -13,6 +13,7 @@ from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
 from PyTorchYOLOv7.attack_detector import MyDetectorYoLov7
 from FasterRCNN.attack_detector import MyFastercnn
 from SSD.attack_detector import MySSD
+from patchnet import PatchNet
 
 from utils_log import Log
 from load_data4 import InriaDataset,DeviceDataLoader,PatchApplier,PatchTransformer,NPSCalculator,DifColorQuantization,PatchEnhancer,BatchDataEnhancer
@@ -21,6 +22,9 @@ import argparse
 import warnings
 warnings.filterwarnings("ignore")
 import time
+"""
+采用网络方式生成patch, 增加参数量,
+"""
 
 def time_synchronized():
     # pytorch-accurate time
@@ -29,10 +33,9 @@ def time_synchronized():
     return time.time()
 
 def train(weightfile_train,weightfile_eval):
-    # writer=SummaryWriter('./logs')
     device =torch.device("cuda" if torch.cuda.is_available() else "cpu") # cuda or cpu
     train_image_size   =640
-    train_batch_size      = 4
+    train_batch_size      = 8
     # 数据集 
     train_loader = torch.utils.data.DataLoader(InriaDataset(img_dir='/data1/yjt/mydatasets/attack_datasets/images/',
                                                             lab_dir='/data1/yjt/mydatasets/attack_datasets/labels/',
@@ -44,31 +47,25 @@ def train(weightfile_train,weightfile_eval):
                                                 num_workers=10)
     train_loader = DeviceDataLoader(train_loader, device)
     # 检测器
-    # detectorfasterrcnn = chooseDector('fasterrcnn')
-    # detectorssd = chooseDector('ssd')
-    # detectoryolov3 = chooseDector('yolov3')
-    # detectoryolov5 = chooseDector('yolov5')
+    detectoryolov5 = chooseDector('yolov5')
     cfgfile = '/data1/yjt/adversarial_attack/myattack/PyTorchYOLOv5/models/yolov5s.yaml'
-    # weightfile='/data1/yjt/adversarial_attack/myattack_training_models/yolov5s-85-enhance-10epoch-dict.pt'
     weightfile=weightfile_train
     detectoryolov5=MyDetectorYoLov5(cfgfile,weightfile)
-    # detectoryolov7 = chooseDector('yolov7')
-    # patch 生成器
-    adv_patch_cpu =generate_patch("random")
 
+    # patch 生成器
+    # adv_patch_cpu =generate_patch("random")
+    adv_patch_cpu = torch.rand((1,3,300,300))
     adv_patch_cpu.requires_grad_(True)
-    # adv_patch = torch.sigmoid(adv_patch)
-    # adv_patch = torch.nn.Parameter(torch.rand(3,10, 10,device = torch.device('cuda')),requires_grad=True)
-    # adv_patch_act=torch.sigmoid(adv_patch)
-    # adv_patch_act.requires_grad_(True)
+   
+    # adv_patch_cpu.requires_grad_(True)
+    model = PatchNet()
+    # model=model.cuda()
+    # model.train()
 
     # patch 应用器 增强器 和 TV计算器
     patch_transformer = PatchTransformer().cuda()
-    # patch_transformer = PositionTransformer().cuda()
     patch_applier = PatchApplier().cuda()
-    # nps_calculator= NPSCalculator(printability_file='/data1/yjt/adversarial_attack/myattack/30values.txt',patch_size=300).cuda()
     dif_color_quantization=DifColorQuantization(printability_file='/data1/yjt/adversarial_attack/myattack/color_after_print.txt',patch_size=300).cuda()
-    # color_map =ColorMap(color_print_before_file='/data1/yjt/adversarial_attack/myattack/color_before_print.txt',color_print_after_file='/data1/yjt/adversarial_attack/myattack/color_after_print.txt',patch_size=300).cuda()
     patch_enhancer = PatchEnhancer().cuda()
 
     rain_msk_dir='/data1/yjt/mydatasets/mask/rainMask/'
@@ -76,16 +73,18 @@ def train(weightfile_train,weightfile_eval):
     data_enhancer = BatchDataEnhancer(rain_msk_dir,fog_msk_dir, train_image_size,posibility=[0.25,0.5,0.75, 1]).cuda()
     
     # 定制学习率
-    start_lr = 0.1
+    start_lr = 0.001
     iter_max = 30000 #最大训练步数 
     power = 0.9
     iter_batch=0  #迭代步数
     # iter_collect=80000 #集体攻击步数
     # lr = start_lr*(1-iter_batch/iter_max)**power 调整策略 
 
+    # params = [adv_patch_cpu]
+    params =model.parameters()
+
     # 优化器
-    optimizer = torch.optim.Adam([adv_patch_cpu], lr=start_lr, betas=(0.5, 0.999), amsgrad=True)
-    # log 为什么这里使用一直失败啊
+    optimizer = torch.optim.Adam(params, lr=start_lr, betas=(0.5, 0.999), amsgrad=True)
     logfile='Myattack-{}.log'.format(time.strftime('%Y-%m-%d-%H-%M-%S'))
     log=Log(logfile)
 
@@ -100,84 +99,83 @@ def train(weightfile_train,weightfile_eval):
         for i,(img_batch, lab_batch) in enumerate(train_loader):
             iter_batch=iter_batch+1
             with autograd.detect_anomaly():
+                adv_patch =adv_patch_cpu.cuda()
+                print("optim: ")
                 img_batch = img_batch.cuda()
                 lab_batch = lab_batch.cuda()
-                # 对于cpu进行更改？
-                # 注意 lab_batch 和img_batch 的 requires_grad 都是false 
-                adv_patch =adv_patch_cpu.cuda()
-                iter_single=0
+                model=model.cuda()
+                adv_patch = model(adv_patch)
+
                 adv_patch=dif_color_quantization(adv_patch)
-                # adv_patch = patch_enhancer(adv_patch)
+                adv_patch = patch_enhancer(adv_patch)
                 adv_batch_t = patch_transformer(adv_patch, lab_batch, train_image_size, with_projection=True,attack_id=[4,7,80])
                 p_img_batch = patch_applier(img_batch, adv_batch_t)
-                # p_img_batch = data_enhancer(p_img_batch)
+                p_img_batch = data_enhancer(p_img_batch)
 
-                # loss_det_fasterrcnn=detectorfasterrcnn.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=512)
-                # loss_det_ssd = detectorssd.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=300)
-                # loss_det_yolov3 = detectoryolov3.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=416)
                 loss_det_yolov5 = detectoryolov5.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=640)
-                # loss_det_yolov7 = detectoryolov7.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=640)
-                loss_det = loss_det_yolov5 
-                # loss_nps=nps_calculator(adv_patch)
+             
             
-                loss = loss_det  
+                loss = loss_det_yolov5
 
-                msg= f"yolov5:{loss_det_yolov5.detach().cpu().numpy():8.5f},"\
+                msg= f"yolov5:{loss.detach().cpu().numpy():8.5f},"\
                      f"learining rate:{optimizer.param_groups[0]['lr']},"\
                      f"iter:{iter_batch},"\
                      f"epoch:{epoch}"
                 print(msg)
 
                 loss.backward()
-                # print(p_img_batch.grad)
-                # pytorch 不会为中间节点保存梯度值 
-                # print(torch.count_nonzero(p_img_batch.grad).item())
-                # print(torch.count_nonzero(adv_batch_t.grad).item())
-                # print(torch.count_nonzero(adv_patch.grad).item())
-
                 optimizer.step()
-                optimizer.param_groups[0]['lr']=start_lr*(1-iter_batch/iter_max)**power 
-                adv_patch_cpu.data.clamp_(0,1)
+                optimizer.zero_grad()
+                optimizer.param_groups[0]['lr']=start_lr*(1-iter_batch/iter_max)**power
 
-                
+                # print('优化之后：')
+                # for name, parms in model.named_parameters():
+                #     if name=='en0.conv.weight':	
+                #         print('-->name:', name, '-->grad_requirs:',parms.requires_grad, \
+                #         ' -->grad_value:',parms.grad,'value:',parms)
                 # iter_single=0
-                # while loss.item()>0.7 and iter_single<5: 
-                #     iter_single=iter_single+1 #while 控制
+                # while loss>0.5 and iter_single<5: 
+                #     iter_single=iter_single+1 
                 #     adv_patch =adv_patch_cpu.cuda()
-                #     adv_patch=dif_color_quantization(adv_patch)
+                #     model=model.cuda()
+
+                #     adv_patch = model(adv_patch)
+                #     # adv_patch=dif_color_quantization(adv_patch)
                 #     adv_patch = patch_enhancer(adv_patch)
+                    
                 #     adv_batch_t = patch_transformer(adv_patch, lab_batch, train_image_size, with_projection=True,attack_id=[4,7,80])
                 #     p_img_batch = patch_applier(img_batch, adv_batch_t)
-                #     p_img_batch = data_enhancer(p_img_batch)
+                #     # p_img_batch = data_enhancer(p_img_batch)
                     
-                #     # loss_det_ssd = detectorssd.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=300)
-                #     # loss_det_yolov3 = detectoryolov3.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.25,clear_imgs=img_batch,img_size=416)
-                #     loss_det_yolov5 = detectoryolov5.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=640)
-                #     # loss_det_yolov7 = detectoryolov7.attack(input_imgs=p_img_batch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=640)
-
+                #     loss_det_yolov5 = detectoryolov5.attack(input_imgs=adv_patch, attack_id=[4,7,80], total_cls=85,object_thres=0.1,clear_imgs=img_batch,img_size=640)
+        
                 #     loss_det = loss_det_yolov5
                 #     loss =loss_det
+
                 #     loss.backward()
                 #     optimizer.step()
                 #     optimizer.zero_grad()
-                #     adv_patch_cpu.data.clamp_(0,1)
-                #     # save_image(adv_patch,"training_patches/" +str(epoch)+'_'+str(iter_batch)+'_'+str(iter_single) + " patch.png")
-                    
-                #     msg= f"yolov5:{loss_det_yolov5.detach().cpu().numpy():8.5f}," \
-                #         f"learining rate:{optimizer.param_groups[0]['lr']},"\
-                #         f"iter:{iter_batch},"\
-                #         f"epoch:{epoch},"
-                #     print(msg)
+                    # adv_patch_cpu.data.clamp_(0,1)
+                    # print('优化之后：')
+                    # for name, parms in model.named_parameters():
+                    #     if name=='en0.conv.weight':	
+                    #         print('-->name:', name, '-->grad_requirs:',parms.requires_grad, \
+                    #         ' -->grad_value:',parms.grad,'value:',parms)
 
-                del adv_batch_t,loss_det, p_img_batch, loss
+                    # msg=f"yolov5:{loss.detach().cpu().numpy():8.5f}," \
+                    #     f"learining rate:{optimizer.param_groups[0]['lr']},"\
+                    #     f"iter:{iter_batch},"\
+                    #     f"epoch:{epoch},"
+                    # print(msg)
+
+                del loss
                 torch.cuda.empty_cache()
 
         optimizer.zero_grad()
         # 保存训练patch 
+        adv_patch=dif_color_quantization(adv_patch)
         print('save generated patch\n')
-        save_image(adv_patch,"training_patches/"+str(epoch) + " patch.png")
-        # if(epoch%10==0):
-        #     evaluate(adv_patch,epoch,log,weightfile_eval)
+        save_image(adv_patch,"training_patches_net/"+str(epoch) + " patch.png")
     
     # evaluate(adv_patch,n_epochs,log,weightfile_eval)
 
@@ -311,7 +309,6 @@ def generate_patch(str):
         # 使用gan 生成某一种类型的patch todo
         pass
 
- 
 if __name__ =='__main__':
 
     for i in range(9,10,1):

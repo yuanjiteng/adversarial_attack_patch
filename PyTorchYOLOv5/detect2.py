@@ -321,12 +321,47 @@ def main(opt):
     # 增加返回函数
     return run(**vars(opt))
 
-if __name__ == "__main__":
+
+def attack_cal(
+    conf_thres_clean=0.7,
+    weight_clean= '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s/weights/epoch9.pt',
+    source_clean='/data1/yjt/mydatasets/attack_datasets/images/',
+    conf_thres_patch=0.7,
+    weight_patch= '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s/weights/epoch9.pt',
+    source_patch= '/data1/yjt/mydatasets/attack_datasets/images/'
+    ):
+    # 关于计算攻击成功率
+    # 主要涉及到的有 opt.conf_thres opt.weight opt.source 这三个参数进行
     opt = parse_opt()
+    opt.conf_thres=conf_thres_clean
+    opt.weights=weight_clean
+    opt.source=source_clean
     successed_predict, failed_predict=main(opt)
     opt1= parse_opt1()
+    opt1.conf_thres=conf_thres_patch
+    opt1.weights=weight_patch
+    opt1.source=source_patch
     successed_predict1, failed_predict1=main(opt1)
+    return successed_predict,failed_predict,successed_predict1,failed_predict1
 
+
+if __name__ == "__main__":
+    conf_thres_clean=0.75
+    weight_clean= '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s/weights/epoch9.pt'
+    source_clean='/data1/yjt/mydatasets/attack_datasets/images/'
+    conf_thres_patch=0.75
+    weight_patch= '/data1/yjt/adversarial_attack/myattack_training_models/yolov5s/weights/epoch9.pt'
+    source_patch= '/data1/yjt/adversarial_attack/myattack/res_imgs/'
+
+    successed_predict,failed_predict,successed_predict1,failed_predict1=attack_cal(conf_thres_clean=conf_thres_clean,
+            weight_clean= weight_clean,
+            source_clean=source_clean,
+            conf_thres_patch=conf_thres_patch,
+            weight_patch= weight_patch,
+            source_patch= source_patch
+            )
+    # successed_predict,failed_predict,successed_predict1,failed_predict1=attack_cal()
     print("干净图像识别成功数目",successed_predict,"干净识别失败数目",failed_predict)
     print("对抗样本识别成功数目",successed_predict1,"对抗样本识别失败数目",failed_predict1)
     print("攻击成功率:",(successed_predict-successed_predict1)/successed_predict)
+

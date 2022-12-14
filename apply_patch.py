@@ -7,12 +7,6 @@ from torchvision import transforms
 from imageio import imread, imwrite
 from torchvision.utils import make_grid, save_image
 
-from torch.utils.tensorboard import SummaryWriter   
-# from PyTorchYOLOv3.attack_detector import MyDetectorYolov3
-# from PyTorchYOLOv5.attack_detector import MyDetectorYoLov5
-# from PyTorchYOLOv7.attack_detector import MyDetectorYoLov7
-# from FasterRCNN.attack_detector import MyFastercnn
-# from SSD.attack_detector import MySSD
 
 from load_data4 import InriaDataset,DeviceDataLoader,PatchApplier,PatchTransformer,NPSCalculator,DifColorQuantization
 
@@ -31,7 +25,6 @@ warnings.filterwarnings("ignore")
 """
 
 def run():
-    writer=SummaryWriter('./logs')
     device =torch.device("cuda" if torch.cuda.is_available() else "cpu") # cuda or cpu
     train_image_size   = 640
     train_batch_size   = 1
@@ -92,7 +85,7 @@ def generate_patch(str):
         adv_patch_cpu = torch.rand((3,300,300))
         return adv_patch_cpu
     elif str == 'img':
-        image = Image.open('./training_patches/60 patch.png').convert('RGB')
+        image = Image.open('./training_patches/175 patch.png').convert('RGB')
         transform = transforms.ToTensor()
         image = transform(image)
         return image
@@ -104,7 +97,6 @@ def generate_patch(str):
     elif str=="gan":
         # 使用gan 生成某一种类型的patch todo
         pass
-
 
 if __name__ =='__main__':
     run()
